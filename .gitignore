@@ -1,0 +1,6 @@
+__pycache__/
+*.pyc
+slurm_logs/
+**/.ipynb_checkpoints/
+configs/hgx_free.yaml
+configs/jz_free.yaml
