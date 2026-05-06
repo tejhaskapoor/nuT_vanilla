@@ -3,10 +3,6 @@
 Classes:
     FeaturesProcessing       — projects raw hit features into model dimension
     AbsolutePositionalEncoding — sinusoidal position encoding
-    CausalityMask            — spacetime (Cherenkov cone) pairwise mask
-    EuclideanMask            — inter-hit distance pairwise mask
-    DotProductMask           — PMT direction dot-product pairwise mask
-    IdsMask                  — detector-ID equality pairwise mask
     PairwiseProcessing       — Conv2d projection of stacked mask channels
     Encoder_block            — transformer encoder block (MHA + FFNN)
 """
