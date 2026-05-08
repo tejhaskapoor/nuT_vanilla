@@ -21,15 +21,8 @@ from .detector import (
 )
 
 from .nuT_model_no_graphnet import (
-    nuT,
-    nuT_PROMETHEUS,
     nuT_vanilla,
 )
-
-from .nuT_model_optimized_no_graphnet import (
-    nuT_optimized,
-)
-
 
 
 from .data_representation import (

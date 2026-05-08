@@ -151,11 +151,9 @@ class GPUUtilizationLogger(pl.Callback):
 # To add a new model: import it and add it to _BACKBONE_REGISTRY below.
 # ==============================================================================
 
-from .nuT_model_no_graphnet import nuT, nuT_PROMETHEUS, nuT_vanilla
+from .nuT_model_no_graphnet import nuT_vanilla
 
 _BACKBONE_REGISTRY = {
-    "nuT": nuT,
-    "nuT_PROMETHEUS": nuT_PROMETHEUS,
     "nuT_vanilla": nuT_vanilla,
 }
 
