@@ -36,9 +36,9 @@ export PYTHONUNBUFFERED=1  # needed because slurm error when printing in python
 
 pip list  # check your env
 
-cd /lustre/fsn1/projects/rech/dtr/commun/nuT_Neutrino_Transformer
+cd /lustre/fsn1/projects/rech/dtr/commun/nuT_vanilla
 
-CONFIG_DIR="/lustre/fsn1/projects/rech/dtr/commun/nuT_Neutrino_Transformer/configs/configs_scaling_studies"
+CONFIG_DIR="/lustre/fsn1/projects/rech/dtr/commun/nuT_vanilla/configs/configs_scaling_studies"
 
 CONFIGS=(
     "$CONFIG_DIR/pone-pro-energy-config-10k.yaml"

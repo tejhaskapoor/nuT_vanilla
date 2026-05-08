@@ -36,22 +36,13 @@ export PYTHONUNBUFFERED=1  # needed because slurm error when printing in python
 
 pip list  # check your env
 
-cd /lustre/fsn1/projects/rech/dtr/commun/nuT_Neutrino_Transformer
+cd /lustre/fsn1/projects/rech/dtr/commun/nuT_vanilla
 
-CONFIG_DIR="/lustre/fsn1/projects/rech/dtr/commun/nuT_Neutrino_Transformer/configs/configs_scaling_studies"
+CONFIG_DIR="/lustre/fsn1/projects/rech/dtr/commun/nuT_vanilla/configs/configs_scaling_studies"
 
 CONFIGS=(
     "$CONFIG_DIR/pone-pro-energy-config-10k.yaml"
     "$CONFIG_DIR/pone-pro-energy-config-20k.yaml"
-    "$CONFIG_DIR/pone-pro-energy-config-50k.yaml"
-    "$CONFIG_DIR/pone-pro-energy-config-100k.yaml"
-    "$CONFIG_DIR/pone-pro-energy-config-200k.yaml"
-    "$CONFIG_DIR/pone-pro-energy-config-500k.yaml"
-    "$CONFIG_DIR/pone-pro-energy-config-1M.yaml"
-    "$CONFIG_DIR/pone-pro-energy-config-2M.yaml"
-    "$CONFIG_DIR/pone-pro-energy-config-5M.yaml"
-    "$CONFIG_DIR/pone-pro-energy-config-10M.yaml"
-    "$CONFIG_DIR/pone-pro-energy-config-20M.yaml"
 )
 
 for CONFIG in "${CONFIGS[@]}"; do
