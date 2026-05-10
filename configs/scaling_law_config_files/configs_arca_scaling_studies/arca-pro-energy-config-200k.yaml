@@ -1,0 +1,83 @@
+training:
+    seed: 42
+    early_stopping_patience: 5  # Stop after this many val epochs without improvement
+    fit:
+        accelerator: "gpu"        # Read by pl.Trainer — "gpu", "cpu", "tpu"
+        devices: 1               # Number of GPUs to use (SLURM assigns via CUDA_VISIBLE_DEVICES) .--gres=gpu:4 in SLURM allocates GPUs, and here, devices tell how many of those allocated gpus to use. so both must match for efficient usage.
+        # Number of devices should also match the ntasks per node or we'll get error
+        max_epochs: 1
+        distribution_strategy: "ddp"   # DistributedDataParallel for multi-GPU
+        precision: "16-mixed"          # AMP: float16 forward pass, float32 grad accumulation
+    test_no_batches: null  # Set to an int (e.g. 20) for a fast sanity-check run; null for full run
+
+models:
+    pretrain_path: null  # Path to .ckpt to load pretrained weights, or null
+    ckpt_path: null # null to start fresh, path to resume
+    to_store_path: "/lustre/fsn1/projects/rech/dtr/commun/logs_and_ckpts/ckpt"  # Directory to save checkpoints
+
+logs:
+    logger: "tensorboard"  # "mlflow" or "tensorboard"
+    experiment_name: "ARCA scaling studies"
+    run_name: "Energy - Scaling - 200k"
+    run_id: null  # mlflow only: null to create a new run
+    dir: "/lustre/fsn1/projects/rech/dtr/commun/logs_and_ckpts/tensorboard_logs/"  # mlflow: tracking dir; tensorboard: save_dir
+    tags: null  # mlflow only
+    steps: 100  # Log metrics every N training steps
+
+detector:
+    name: "ARCATriangle"   # Class name from detector.py — change this to switch detectors without touching the training script
+
+data:
+    features:
+        - "sensor_pos_x"   # Sensor x-position (m)
+        - "sensor_pos_y"   # Sensor y-position (m)
+        - "sensor_pos_z"   # Sensor z-position (m)
+        - "t"              # Hit time (ns)
+        - "charge"         # Hit charge (PE)
+        - "string_id"      # String/DU identifier (used by STRING pairwise mask; stripped before transformer)
+        - "is_signal"      # Column name of signal/noise flag (1=signal photon, 0=noise)
+    truth:
+        - "initial_state_energy"   # Neutrino energy (GeV) — target for energy task
+        - "event_no"               # Event identifier
+        - "initial_state_type"     # PDG particle code
+        - "interaction"            # 1=CC, 2=NC
+
+node_definition:
+    max_hits: 500           # Maximum hits per event passed to the transformer
+    trig_name: "is_signal"  # Column name of signal/noise flag (1=signal photon, 0=noise). Earlier this name was "is_signal", but program showed warning that it couldnt find is_signal column
+    unique: false           # If true, keep only the first hit per PMT before subsampling
+
+dataloader:
+    path: "/lustre/fsn1/projects/rech/dtr/commun/pr_data/ARCA/merged.db"
+    selection_train: "/lustre/fsn1/projects/rech/dtr/commun/pr_data/ARCA/selections/train_selection.parquet"
+    events: 200000             # null to use all available events; set ~1000 for testing
+    pulsemap: "merged_photons"
+    truth_table_name: "mc_truth"
+    batch_size: 128           # Events per batch (reduce to 32 for debugging)
+    num_workers: 8            # DataLoader workers — match cpus-per-task in SLURM job script
+    validation_size: 0.1    # Fraction of events reserved for validation
+
+backbone:
+    name: "nuT_vanilla"     # Model class: "nuT", "nuT_PROMETHEUS", or "nuT_vanilla"
+    emb_type: "nuT"            # "nuT" (linear), "Kaggle" (2-layer MLP), "ParticleTransformer"
+    abs_position_encoding: false
+    emb_dims:
+        - 128                  # Model dimension
+    num_heads: 8               # Number of attention heads
+    # --- nuT_vanilla only ---
+    no_blocks: 8               # Total encoder blocks (vanilla has no hits/evt split)
+    # --- shared ---
+    dropout_attn: 0.2
+    hidden_dim: 256            # Feed-forward network hidden dimension
+    dropout_FFNN: 0.2
+
+# Task to train. One of:
+#   "Track shower classification"
+#   "Energy reconstruction"
+#   "Direction reconstruction"
+task: "Energy reconstruction"
+
+optimizer:
+    parameters:
+        lr: 1.0e-3
+    scheduler_patience: 3  # ReduceLROnPlateau patience (epochs without val_loss improvement)

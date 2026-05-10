@@ -1,8 +1,8 @@
 #!/bin/bash
 
-#SBATCH --job-name=pone_nuT_scaling
-#SBATCH --output=/lustre/fsn1/projects/rech/dtr/commun/logs_and_ckpts/slurm_logs/pone_nuT_scaling_output.out
-#SBATCH --error=/lustre/fsn1/projects/rech/dtr/commun/logs_and_ckpts/slurm_logs/pone_nuT_scaling_error.err
+#SBATCH --job-name=icecube_nuT_scaling
+#SBATCH --output=/lustre/fsn1/projects/rech/dtr/commun/logs_and_ckpts/slurm_logs/icecube_nuT_scaling_output.out
+#SBATCH --error=/lustre/fsn1/projects/rech/dtr/commun/logs_and_ckpts/slurm_logs/icecube_nuT_scaling_error.err
 #SBATCH --mail-type=ALL
 #SBATCH --mail-user=kapoor@lpccaen.in2p3.fr
 
@@ -38,18 +38,27 @@ pip list  # check your env
 
 cd /lustre/fsn1/projects/rech/dtr/commun/nuT_vanilla
 
-CONFIG_DIR="/lustre/fsn1/projects/rech/dtr/commun/nuT_vanilla/configs/configs_scaling_studies"
+CONFIG_DIR="/lustre/fsn1/projects/rech/dtr/commun/nuT_vanilla/configs/scaling_law_config_files/configs_icecube_scaling_studies"
 
 CONFIGS=(
-    "$CONFIG_DIR/pone-pro-energy-config-10k.yaml"
-    "$CONFIG_DIR/pone-pro-energy-config-20k.yaml"
+    "$CONFIG_DIR/icecube-pro-energy-config-10k.yaml"
+    "$CONFIG_DIR/icecube-pro-energy-config-20k.yaml"
+    "$CONFIG_DIR/icecube-pro-energy-config-50k.yaml"
+    "$CONFIG_DIR/icecube-pro-energy-config-100k.yaml"
+    "$CONFIG_DIR/icecube-pro-energy-config-200k.yaml"
+    "$CONFIG_DIR/icecube-pro-energy-config-500k.yaml"
+    "$CONFIG_DIR/icecube-pro-energy-config-1M.yaml"
+    "$CONFIG_DIR/icecube-pro-energy-config-2M.yaml"
+    "$CONFIG_DIR/icecube-pro-energy-config-5M.yaml"
+    "$CONFIG_DIR/icecube-pro-energy-config-10M.yaml"
+    "$CONFIG_DIR/icecube-pro-energy-config-20M.yaml"
 )
 
 for CONFIG in "${CONFIGS[@]}"; do
     echo "=========================================="
     echo "Running config: $CONFIG"
     echo "=========================================="
-    srun python scripts/pone-pro-train.py \
+    srun python scripts/icecube-pro-train.py \
         --config "$CONFIG"
     echo "Finished: $CONFIG"
 done
