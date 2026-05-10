@@ -17,7 +17,7 @@ models:
 
 logs:
     logger: "tensorboard"  # "mlflow" or "tensorboard"
-    experiment_name: "ORCA scaling studies"
+    experiment_name: "ORCA nuT_vanilla scaling studies"
     run_name: "Energy - Scaling - 200k"
     run_id: null  # mlflow only: null to create a new run
     dir: "/lustre/fsn1/projects/rech/dtr/commun/logs_and_ckpts/tensorboard_logs/"  # mlflow: tracking dir; tensorboard: save_dir
