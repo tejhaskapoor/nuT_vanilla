@@ -24,7 +24,7 @@ logs:
     steps: 100  # Log metrics every N training steps
 
 detector:
-    name: "PONETriangle"   # Class name from detector.py — change this to switch detectors without touching the training script
+    name: "PrometheusDetector_PONE"   # Class name from detector.py — change this to switch detectors without touching the training script
 
 data:
     features:

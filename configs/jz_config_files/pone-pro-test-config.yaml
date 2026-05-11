@@ -15,16 +15,16 @@ models:
     to_store_path: "/lustre/fsn1/projects/rech/dtr/commun/logs_and_ckpts/ckpt"  # Directory to save checkpoints
 
 logs:
-    logger: "mlflow"  # "mlflow" or "tensorboard"
+    logger: "tensorboard"  # "mlflow" or "tensorboard"
     experiment_name: "Prometheus PONE"
     run_name: "Energy Reconstruction test"
     run_id: null  # mlflow only: null to create a new run
-    dir: "/lustre/fsn1/projects/rech/dtr/commun/logs_and_ckpts/mlflow_logs/"  # mlflow: tracking dir; tensorboard: save_dir
+    dir: "/lustre/fsn1/projects/rech/dtr/commun/logs_and_ckpts/tensorboard_logs/"  # mlflow: tracking dir; tensorboard: save_dir
     tags: null  # mlflow only
     steps: 100  # Log metrics every N training steps
 
 detector:
-    name: "PONETriangle"   # Class name from detector.py — change this to switch detectors without touching the training script
+    name: "PrometheusDetector_PONE"   # Class name from detector.py — change this to switch detectors without touching the training script
 
 data:
     features:
