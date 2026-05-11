@@ -908,3 +908,34 @@ class PrometheusDetector(Detector):
     def _charge(self, x: torch.Tensor) -> torch.Tensor:
         # log1p compresses dynamic range of charge (PE counts span several decades)
         return torch.log10(1 + x)
+
+
+class PrometheusDetector_PONE(PrometheusDetector):
+    """`PrometheusDetector` for P-ONE (pone_triangle.parquet)."""
+    geometry_table_path = os.path.join(PROMETHEUS_GEOMETRY_TABLE_DIR, "pone_triangle.parquet")
+
+
+class PrometheusDetector_ARCA(PrometheusDetector):
+    """`PrometheusDetector` for ARCA (arca.parquet)."""
+    geometry_table_path = os.path.join(PROMETHEUS_GEOMETRY_TABLE_DIR, "arca.parquet")
+
+
+class PrometheusDetector_ORCA(PrometheusDetector):
+    """`PrometheusDetector` for ORCA (orca.parquet)."""
+    geometry_table_path = os.path.join(PROMETHEUS_GEOMETRY_TABLE_DIR, "orca_150.parquet")
+
+
+class PrometheusDetector_GVD(PrometheusDetector):
+    """`PrometheusDetector` for Baikal-GVD (gvd.parquet)."""
+    geometry_table_path = os.path.join(PROMETHEUS_GEOMETRY_TABLE_DIR, "gvd.parquet")
+
+
+class PrometheusDetector_TRIDENT(PrometheusDetector):
+    """`PrometheusDetector` for TRIDENT (trident.parquet)."""
+    geometry_table_path = os.path.join(PROMETHEUS_GEOMETRY_TABLE_DIR, "trident.parquet")
+
+
+class PrometheusDetector_ICECUBE(PrometheusDetector):
+    """`PrometheusDetector` for IceCube (icecube.parquet)."""
+    geometry_table_path = os.path.join(PROMETHEUS_GEOMETRY_TABLE_DIR, "icecube.parquet")
+

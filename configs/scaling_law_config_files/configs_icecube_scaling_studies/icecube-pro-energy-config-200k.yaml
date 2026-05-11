@@ -17,7 +17,7 @@ models:
 
 logs:
     logger: "tensorboard"  # "mlflow" or "tensorboard"
-    experiment_name: "IceCube nuT_vanilla scaling studies"
+    experiment_name: "IceCube scaling studies"
     run_name: "Energy - Scaling - 200k"
     run_id: null  # mlflow only: null to create a new run
     dir: "/lustre/fsn1/projects/rech/dtr/commun/logs_and_ckpts/tensorboard_logs/"  # mlflow: tracking dir; tensorboard: save_dir
@@ -25,7 +25,7 @@ logs:
     steps: 100  # Log metrics every N training steps
 
 detector:
-    name: "IceCubeTriangle"   # Class name from detector.py — change this to switch detectors without touching the training script
+    name: "PrometheusDetector_ICECUBE"   # Class name from detector.py — change this to switch detectors without touching the training script
 
 data:
     features:
@@ -58,12 +58,25 @@ dataloader:
     validation_size: 0.1    # Fraction of events reserved for validation
 
 backbone:
-    name: "nuT_vanilla"     # Model class: "nuT", "nuT_PROMETHEUS", or "nuT_vanilla"
+    name: "nuT_PROMETHEUS"     # Model class: "nuT", "nuT_PROMETHEUS", or "nuT_vanilla"
     emb_type: "nuT"            # "nuT" (linear), "Kaggle" (2-layer MLP), "ParticleTransformer"
     abs_position_encoding: false
     emb_dims:
         - 128                  # Model dimension
     num_heads: 8               # Number of attention heads
+    # --- nuT / nuT_PROMETHEUS only ---
+    mode: 'concat'             # Pairwise mask combination: 'concat' (per-head) or 'sum'
+    # Available masks:
+    #   KM3NeT only  : 'DUs' (du_id), 'DOMs' (dom_id), 'PMTs' (channel_id)
+    #   Prometheus only: 'STRING' (string_id)
+    #   Both detectors : 'Euclidean', 'Causality'
+    # Set to null to let the model pick the correct defaults for the detector automatically.
+    masks: null
+    refractive_index: 1.33     # Optical refractive index (water) for CausalityMask
+    pairwise_dims:
+        - 64                   # Hidden channels in the pairwise Conv2d projection
+    no_hits_blocks: 8          # Encoder blocks on hits only (no CLS token)
+    no_evt_blocks: 4           # Encoder blocks including CLS token (global event attention)
     # --- nuT_vanilla only ---
     no_blocks: 8               # Total encoder blocks (vanilla has no hits/evt split)
     # --- shared ---
