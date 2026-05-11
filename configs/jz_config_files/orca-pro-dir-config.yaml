@@ -61,7 +61,7 @@ dataloader:
     validation_size: 0.1    # Fraction of events reserved for validation
 
 backbone:
-    name: "nuT_PROMETHEUS"     # Model class: "nuT", "nuT_PROMETHEUS", or "nuT_vanilla"
+    name: "nuT_vanilla"     # Model class: "nuT", "nuT_PROMETHEUS", or "nuT_vanilla"
     emb_type: "nuT"            # "nuT" (linear), "Kaggle" (2-layer MLP), "ParticleTransformer"
     abs_position_encoding: false
     emb_dims:
