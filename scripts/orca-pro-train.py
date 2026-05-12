@@ -55,7 +55,7 @@ from .. import detector as _detector_module
 from ..constants import PROMETHEUS_GEOMETRY_TABLE_DIR
 from ..labels import Track
 from ..dataloader import make_train_validation_dataloader
-from ..script_supporting_functions import log_model_complexity, build_backbone
+from ..script_supporting_functions import build_backbone  # log_model_complexity
 
 import math
 import sqlite3
@@ -216,7 +216,7 @@ def main(config_file):
     # The model backbone — class is set by config["backbone"]["name"]
     backbone = build_backbone(config, features, updated_features, idx_dict)
 
-    log_model_complexity(backbone, training_dataloader, pl_logger)
+    # log_model_complexity(backbone, training_dataloader, pl_logger)
 
     # The task definition (standalone — no graphnet)
     tasks = {
