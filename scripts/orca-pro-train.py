@@ -167,8 +167,9 @@ def main(config_file):
     mc_truth_pd['interaction'] = mc_truth_info[:, 2]
     mc_truth_pd = mc_truth_pd[np.isin(mc_truth_pd['event_no'].values, selection)]
 
-    tracks = mc_truth_pd[mc_truth_pd['interaction'] == 1]['event_no'].astype(int).values
-    cascades = mc_truth_pd[mc_truth_pd['interaction'] == 2]['event_no'].astype(int).values
+    is_track = (mc_truth_pd['initial_state_type'].abs() == 14) & (mc_truth_pd['interaction'] == 1)
+    tracks   = mc_truth_pd[is_track]['event_no'].astype(int).values
+    cascades = mc_truth_pd[~is_track]['event_no'].astype(int).values
 
     logger.info(f'{len(tracks)} tracks in dataset')
     logger.info(f'{len(cascades)} cascades in dataset')

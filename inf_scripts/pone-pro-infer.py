@@ -139,7 +139,7 @@ def _log_classification(results):
 
     from sklearn.metrics import roc_curve, auc as sk_auc
 
-    true_track = ((results["interaction"] == 1)).astype(int).values
+    true_track = ((results["initial_state_type"].abs() == 14) & (results["interaction"] == 1)).astype(int).values
     logits     = results["target_pred"].values
     scores     = 1 / (1 + np.exp(-logits))   # sigmoid
 
