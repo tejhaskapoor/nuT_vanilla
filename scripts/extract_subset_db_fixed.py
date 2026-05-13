@@ -7,7 +7,7 @@ Creates:
                                     (drop-in replacement for the original selection parquet)
 
 Usage:
-    python extract_subset_db.py \
+    python extract_subset_db_fixed.py \
         --src  /path/to/merged.db \
         --dst  /path/to/merged_100k.db \
         --n    100000 \
