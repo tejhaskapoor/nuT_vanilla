@@ -19,15 +19,6 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s  %(levelname)s  %(me
 log = logging.getLogger(__name__)
 
 
-def copy_table_schema(src_conn, dst_conn, table):
-    row = src_conn.execute(
-        "SELECT sql FROM sqlite_master WHERE type='table' AND name=?", (table,)
-    ).fetchone()
-    if row is None:
-        raise RuntimeError(f"Table '{table}' not found in source database.")
-    dst_conn.execute(row[0])
-
-
 def main(args):
     if os.path.exists(args.dst):
         raise FileExistsError(f"Destination already exists: {args.dst}\nDelete it first.")
@@ -35,16 +26,15 @@ def main(args):
     log.info(f"Source : {args.src}")
     log.info(f"Target : {args.dst}")
 
-    src_conn = sqlite3.connect(args.src)
-    dst_conn = sqlite3.connect(args.dst)
+    conn = sqlite3.connect(args.dst)
 
     try:
-        dst_conn.execute(f"ATTACH DATABASE ? AS src", (args.src,))
+        conn.execute("ATTACH DATABASE ? AS src", (args.src,))
 
         # pick the first N event_nos from the truth table
         event_nos = [
-            row[0] for row in src_conn.execute(
-                f"SELECT event_no FROM {args.truth_table} LIMIT ?", (args.n,)
+            row[0] for row in conn.execute(
+                f"SELECT event_no FROM src.{args.truth_table} LIMIT ?", (args.n,)
             )
         ]
         log.info(f"Selected {len(event_nos)} events")
@@ -52,21 +42,25 @@ def main(args):
         placeholders = ",".join("?" * len(event_nos))
 
         for table in (args.truth_table, args.pulse_table):
-            copy_table_schema(src_conn, dst_conn, table)
-            dst_conn.execute(
+            schema = conn.execute(
+                "SELECT sql FROM src.sqlite_master WHERE type='table' AND name=?", (table,)
+            ).fetchone()
+            if schema is None:
+                raise RuntimeError(f"Table '{table}' not found in source database.")
+            conn.execute(schema[0])
+            conn.execute(
                 f"INSERT INTO {table} SELECT * FROM src.{table} WHERE event_no IN ({placeholders})",
                 event_nos,
             )
-            n = dst_conn.execute(f"SELECT COUNT(*) FROM {table}").fetchone()[0]
+            n = conn.execute(f"SELECT COUNT(*) FROM {table}").fetchone()[0]
             log.info(f"  {table}: {n} rows copied")
 
-        dst_conn.execute("DETACH DATABASE src")
-        dst_conn.commit()
+        conn.execute("DETACH DATABASE src")
+        conn.commit()
         log.info("Done.")
 
     finally:
-        src_conn.close()
-        dst_conn.close()
+        conn.close()
 
 
 if __name__ == "__main__":
