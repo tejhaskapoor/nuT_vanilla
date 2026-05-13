@@ -47,8 +47,8 @@ node_definition:
     unique: false           # If true, keep only the first hit per PMT before subsampling
 
 dataloader:
-    path: "/lustre/fsn1/projects/rech/dtr/commun/ORCA/merged_1k.db"
-    selection_train: "/lustre/fsn1/projects/rech/dtr/commun/ORCA/selections/merged_1k_selection.parquet"
+    path: "/lustre/fsn1/projects/rech/lba/commun/ORCA/merged_1k.db"
+    selection_train: "/lustre/fsn1/projects/rech/lba/commun/ORCA/selections/merged_1k_selection.parquet"
     events: 1000             # Track/cascade events each to use (set ~1000 for testing)
     pulsemap: "merged_photons"
     truth_table_name: "mc_truth"
