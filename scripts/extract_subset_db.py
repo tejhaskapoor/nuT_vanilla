@@ -86,7 +86,7 @@ def copy_rows_chunked(
             src_conn,
             params=chunk,
         )
-        df = df.apply(pd.to_numeric, errors="ignore")
+        df = df.apply(pd.to_numeric, errors="coerce")
         df.to_sql(table, dst_conn, if_exists="append", index=False)
         total_rows += len(df)
         log.info(f"  [{table}] copied events {i}–{i + len(chunk) - 1}  ({total_rows} rows so far)")
