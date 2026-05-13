@@ -380,7 +380,7 @@ class NuTStandardModel(pl.LightningModule):
             train_batch = [train_batch]
         loss = self.shared_step(train_batch, batch_idx)
         # batch_size from n_pulses tensor length (number of events in the batch)
-        batch_size = sum(d["n_pulses"].shape[0] if isinstance(d, dict) else d.num_graphs if hasattr(d, 'num_graphs') else 1 for d in train_batch)
+        batch_size = train_batch[0]["n_pulses"].shape[0]
         self.log("train_loss", loss, batch_size=batch_size,
                  prog_bar=True, on_epoch=True, on_step=False, sync_dist=True)
         current_lr = self.trainer.optimizers[0].param_groups[0]["lr"]
@@ -391,7 +391,7 @@ class NuTStandardModel(pl.LightningModule):
         if not isinstance(val_batch, list):
             val_batch = [val_batch]
         loss = self.shared_step(val_batch, batch_idx)
-        batch_size = sum(d["n_pulses"].shape[0] if isinstance(d, dict) else d.num_graphs if hasattr(d, 'num_graphs') else 1 for d in val_batch)
+        batch_size = val_batch[0]["n_pulses"].shape[0]
         self.log("val_loss", loss, batch_size=batch_size,
                  prog_bar=True, on_epoch=True, on_step=False, sync_dist=True)
         return loss

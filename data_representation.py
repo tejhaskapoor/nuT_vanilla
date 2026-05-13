@@ -359,7 +359,7 @@ class KM3NeTHitsSequence(nn.Module):
         if truth_dicts is not None:
             for truth_dict in truth_dicts:
                 for key, val in truth_dict.items():
-                    result[key] = torch.tensor(val)
+                    result[key] = val
         return result
 
     def _perturb_input(self, input_features):

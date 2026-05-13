@@ -147,7 +147,7 @@ class PrometheusEventDataset(Dataset):
         )
         conn.close()
 
-        pulse_tensor = torch.tensor(pulse_df.values, dtype=torch.float32)
+        pulse_tensor = torch.from_numpy(pulse_df.values.astype("float32"))
         # shape: [n_pulses_raw, n_features]
 
         # ── 2. Build per-event truth dict (scalar tensors) ───────────────────
@@ -203,11 +203,20 @@ def collate_fn(batch: List[Dict]) -> Dict:
     # Derive n_pulses from actual tensor shapes (ignores the stored scalar so
     # that any subsampling already applied by KM3NeTNodesAsTimeSeries is respected).
     n_pulses = torch.tensor([x.shape[0] for x in xs], dtype=torch.long)
+    
+    not_ok_pulses = n_pulses == 0
+    if not_ok_pulses.any():
+        new_xs, new_n_pulses = [], []
+        for ii in range(len(xs)):
+            if n_pulses[ii] > 0:
+                new_xs.append(xs[ii])
+                new_n_pulses.append(n_pulses[ii])
+
+        xs = new_xs
+        n_pulses = torch.tensor(new_n_pulses, dtype=torch.long)
 
     x_cat = torch.cat(xs, dim=0)                                    # [N_total, D]
-    batch_idx = torch.repeat_interleave(
-        torch.arange(len(batch), dtype=torch.long), n_pulses
-    )                                                                # [N_total]
+    batch_idx = torch.repeat_interleave(n_pulses)                                                                # [N_total]
 
     result: Dict = {
         "x":        x_cat,
@@ -218,7 +227,7 @@ def collate_fn(batch: List[Dict]) -> Dict:
     # Stack every other key as a [B] tensor.
     other_keys = [k for k in batch[0] if k not in ("x", "n_pulses")]
     for key in other_keys:
-        values = [item[key] for item in batch]
+        values = [item[key] for ii, item in enumerate(batch) if not not_ok_pulses[ii].item()]
         result[key] = torch.stack(values)
 
     return result
