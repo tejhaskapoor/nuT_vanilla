@@ -13,14 +13,14 @@ training:
 models:
     pretrain_path: null  # Path to .ckpt to load pretrained weights, or null
     ckpt_path: null # null to start fresh, path to resume
-    to_store_path: "/lustre/fsn1/projects/rech/dtr/commun/logs_and_ckpts/ckpt"  # Directory to save checkpoints
+    to_store_path: "/lustre/fsn1/projects/rech/lba/commun/logs_and_ckpts/ckpt"  # Directory to save checkpoints
 
 logs:
     logger: "tensorboard"  # "mlflow" or "tensorboard"
     experiment_name: "PONE scaling studies"
     run_name: "Energy - Scaling - 200k"
     run_id: null  # mlflow only: null to create a new run
-    dir: "/lustre/fsn1/projects/rech/dtr/commun/logs_and_ckpts/tensorboard_logs/"  # mlflow: tracking dir; tensorboard: save_dir
+    dir: "/lustre/fsn1/projects/rech/lba/commun/logs_and_ckpts/tensorboard_logs/"  # mlflow: tracking dir; tensorboard: save_dir
     tags: null  # mlflow only
     steps: 100  # Log metrics every N training steps
 
@@ -48,8 +48,8 @@ node_definition:
     unique: false           # If true, keep only the first hit per PMT before subsampling
 
 dataloader:
-    path: "/lustre/fsn1/projects/rech/dtr/commun/pr_data/PONE/merged.db"
-    selection_train: "/lustre/fsn1/projects/rech/dtr/commun/pr_data/PONE/selections/train_selection.parquet"
+    path: "/lustre/fsn1/projects/rech/lba/commun/PONE/merged.db"
+    selection_train: "/lustre/fsn1/projects/rech/lba/commun/PONE/selections/train_selection.parquet"
     events: 200000             # null to use all available events; set ~1000 for testing
     pulsemap: "merged_photons"
     truth_table_name: "mc_truth"

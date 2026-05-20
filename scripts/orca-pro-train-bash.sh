@@ -1,12 +1,12 @@
 #!/bin/bash
 
 #SBATCH --job-name=orca_dir_nuT_training
-#SBATCH --output=/lustre/fsn1/projects/rech/dtr/commun/logs_and_ckpts/slurm_logs/orca_dir_nuT_output.out
-#SBATCH --error=/lustre/fsn1/projects/rech/dtr/commun/logs_and_ckpts/slurm_logs/orca_dir_nuT_error.err
+#SBATCH --output=/lustre/fsn1/projects/rech/lba/commun/logs_and_ckpts/slurm_logs/orca_dir_nuT_output.out
+#SBATCH --error=/lustre/fsn1/projects/rech/lba/commun/logs_and_ckpts/slurm_logs/orca_dir_nuT_error.err
 #SBATCH --mail-type=ALL
 #SBATCH --mail-user=kapoor@lpccaen.in2p3.fr
 
-#SBATCH --account=dtr@a100
+#SBATCH --account=lba@a100
 #SBATCH --constraint=a100
 #SBATCH --qos=qos_gpu_a100-t3
 #SBATCH --nodes=1
@@ -36,9 +36,9 @@ export PYTHONUNBUFFERED=1  # needed because slurm error when printing in python
 
 pip list  # check your env
 
-cd /lustre/fsn1/projects/rech/dtr/commun/nuT_Neutrino_Transformer
+cd /lustre/fsn1/projects/rech/lba/commun/nuT_Neutrino_Transformer
 
-CONFIG="/lustre/fsn1/projects/rech/dtr/commun/nuT_Neutrino_Transformer/configs/jz_config_files/orca-pro-dir-config.yaml"
+CONFIG="/lustre/fsn1/projects/rech/lba/commun/nuT_Neutrino_Transformer/configs/jz_config_files/orca-pro-dir-config.yaml"
 
 srun python scripts/orca-pro-train-optimized.py \
     --config "$CONFIG"

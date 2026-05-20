@@ -1,12 +1,12 @@
 #!/bin/bash
 
 #SBATCH --job-name=pone_nuT_linear_probe
-#SBATCH --output=/lustre/fsn1/projects/rech/dtr/commun/logs_and_ckpts/slurm_logs/pone_linear_probe_output.out
-#SBATCH --error=/lustre/fsn1/projects/rech/dtr/commun/logs_and_ckpts/slurm_logs/pone_linear_probe_error.err
+#SBATCH --output=/lustre/fsn1/projects/rech/lba/commun/logs_and_ckpts/slurm_logs/pone_linear_probe_output.out
+#SBATCH --error=/lustre/fsn1/projects/rech/lba/commun/logs_and_ckpts/slurm_logs/pone_linear_probe_error.err
 #SBATCH --mail-type=ALL
 #SBATCH --mail-user=kapoor@lpccaen.in2p3.fr
 
-#SBATCH --account=dtr@a100
+#SBATCH --account=lba@a100
 #SBATCH --constraint=a100
 #SBATCH --qos=qos_gpu_a100-t3
 #SBATCH --nodes=1
@@ -31,11 +31,11 @@ module load pytorch-gpu/py3/2.8.0
 echo "Python: $(which python)"
 export PYTHONUNBUFFERED=1
 
-cd /lustre/fsn1/projects/rech/dtr/commun/nuT_Neutrino_Transformer
+cd /lustre/fsn1/projects/rech/lba/commun/nuT_Neutrino_Transformer
 
-CKPT="/lustre/fsn1/projects/rech/dtr/commun/logs_and_ckpts/ckpt/PONE Prometheus/Energy Reconstruction 100k events nuT_vanilla/Energy Reconstruction 100k events nuT_vanilla_epoch=48_val_loss=0.0991.ckpt"
+CKPT="/lustre/fsn1/projects/rech/lba/commun/logs_and_ckpts/ckpt/PONE Prometheus/Energy Reconstruction 100k events nuT_vanilla/Energy Reconstruction 100k events nuT_vanilla_epoch=48_val_loss=0.0991.ckpt"
 CONFIG="configs/jz_config_files/pone-pro-energy-config.yaml"
-OUTPUT_DIR="/lustre/fsn1/projects/rech/dtr/commun/logs_and_ckpts/probe_output"
+OUTPUT_DIR="/lustre/fsn1/projects/rech/lba/commun/logs_and_ckpts/probe_output"
 
 srun python -m linear_probe_analysis \
     --config  "$CONFIG" \

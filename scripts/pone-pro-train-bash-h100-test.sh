@@ -1,8 +1,8 @@
 #!/bin/bash
 
 #SBATCH --job-name=pone_nuT_training
-#SBATCH --output=/lustre/fsn1/projects/rech/dtr/commun/logs_and_ckpts/slurm_logs/pone_nuT_output.out
-#SBATCH --error=/lustre/fsn1/projects/rech/dtr/commun/logs_and_ckpts/slurm_logs/pone_nuT_error.err
+#SBATCH --output=/lustre/fsn1/projects/rech/lba/commun/logs_and_ckpts/slurm_logs/pone_nuT_output.out
+#SBATCH --error=/lustre/fsn1/projects/rech/lba/commun/logs_and_ckpts/slurm_logs/pone_nuT_error.err
 #SBATCH --mail-type=ALL
 #SBATCH --mail-user=kapoor@lpccaen.in2p3.fr
 
@@ -36,9 +36,9 @@ export PYTHONUNBUFFERED=1  # needed because slurm error when printing in python
 
 pip list  # check your env
 
-cd /lustre/fsn1/projects/rech/dtr/commun/nuT_Neutrino_Transformer
+cd /lustre/fsn1/projects/rech/lba/commun/nuT_Neutrino_Transformer
 
-CONFIG="/lustre/fsn1/projects/rech/dtr/commun/nuT_Neutrino_Transformer/configs/jz_config_files/jz-free.yaml"
+CONFIG="/lustre/fsn1/projects/rech/lba/commun/nuT_Neutrino_Transformer/configs/jz_config_files/jz-free.yaml"
 
 srun python scripts/pone-pro-train.py \
     --config "$CONFIG"

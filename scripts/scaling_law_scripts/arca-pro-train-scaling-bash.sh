@@ -1,12 +1,12 @@
 #!/bin/bash
 
 #SBATCH --job-name=arca_nuT_scaling
-#SBATCH --output=/lustre/fsn1/projects/rech/dtr/commun/logs_and_ckpts/slurm_logs/arca_nuT_scaling_output.out
-#SBATCH --error=/lustre/fsn1/projects/rech/dtr/commun/logs_and_ckpts/slurm_logs/arca_nuT_scaling_error.err
+#SBATCH --output=/lustre/fsn1/projects/rech/lba/commun/logs_and_ckpts/slurm_logs/arca_nuT_scaling_output.out
+#SBATCH --error=/lustre/fsn1/projects/rech/lba/commun/logs_and_ckpts/slurm_logs/arca_nuT_scaling_error.err
 #SBATCH --mail-type=ALL
 #SBATCH --mail-user=kapoor@lpccaen.in2p3.fr
 
-#SBATCH --account=dtr@a100
+#SBATCH --account=lba@a100
 #SBATCH --constraint=a100
 #SBATCH --qos=qos_gpu_a100-t3
 #SBATCH --nodes=1
@@ -36,9 +36,9 @@ export PYTHONUNBUFFERED=1  # needed because slurm error when printing in python
 
 pip list  # check your env
 
-cd /lustre/fsn1/projects/rech/dtr/commun/nuT_vanilla
+cd /lustre/fsn1/projects/rech/lba/commun/nuT_vanilla
 
-CONFIG_DIR="/lustre/fsn1/projects/rech/dtr/commun/nuT_vanilla/configs/scaling_law_config_files/configs_arca_scaling_studies"
+CONFIG_DIR="/lustre/fsn1/projects/rech/lba/commun/nuT_vanilla/configs/scaling_law_config_files/configs_arca_scaling_studies"
 
 CONFIGS=(
     "$CONFIG_DIR/arca-pro-energy-config-10k.yaml"
