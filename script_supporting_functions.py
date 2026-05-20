@@ -181,6 +181,7 @@ def build_backbone(config, features, updated_features, idx_dict):
         dropout_attn=bb["dropout_attn"],
         hidden_dim=bb["hidden_dim"],
         dropout_FFNN=bb["dropout_FFNN"],
+        use_varlen=bb["use_varlen"],
     )
 
     if name == "nuT_vanilla":

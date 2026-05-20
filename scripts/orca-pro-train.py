@@ -71,7 +71,7 @@ def load_config(config_file):
 
 
 def main(config_file):
-
+    torch.backends.cuda.enable_flash_sdp(False)  # TODO: put to true
     config = load_config(config_file)
 
     # Set the seed

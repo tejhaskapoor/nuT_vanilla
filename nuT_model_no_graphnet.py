@@ -23,8 +23,13 @@ from torch import Tensor
 from .model_components import (
     FeaturesProcessing,
     AbsolutePositionalEncoding,
-    PairwiseProcessing,
     Encoder_block,
+
+    AbsolutePositionalEncoding_varlen,
+    Encoder_block_varlen,
+    batch2offset,
+    concat_tokens_from_seqlens,
+    scatter_at_first_index,
 )
 
 from .data_representation import array_to_sequence
@@ -69,6 +74,7 @@ class nuT_vanilla(nn.Module):
         hidden_dim: int = 256,
         dropout_FFNN: float = 0.2,
         no_blocks: int = 8,
+        use_varlen: bool = False,
     ):
         """Construct the vanilla nuT transformer.
 
@@ -100,18 +106,29 @@ class nuT_vanilla(nn.Module):
 
         # Learnable CLS token: prepended to the hit sequence to aggregate
         # global event information
-        self.cls_token = nn.Parameter(torch.randn(1, 1, model_dim))
+        self.cls_token = nn.Parameter(torch.randn(1, model_dim))
+
+        self.use_varlen = use_varlen
 
         # Feature embedding and position encoding
         self.processing = FeaturesProcessing(emb_type, model_dim, n_features)
         self.abs_position_encoding = abs_position_encoding
-        self.pos_enc = AbsolutePositionalEncoding(model_dim, seq_length)
+        if self.use_varlen:
+            self.pos_enc = AbsolutePositionalEncoding_varlen(model_dim, seq_length)
+        else:
+            self.pos_enc = AbsolutePositionalEncoding(model_dim, seq_length)
 
         # Encoder blocks
-        self.blocks = nn.Sequential(
-            *[Encoder_block(model_dim, num_heads, dropout_attn, hidden_dim, dropout_FFNN)
-              for _ in range(no_blocks)]
-        )
+        if self.use_varlen:
+            self.blocks = nn.Sequential(
+                *[Encoder_block_varlen(model_dim, num_heads, dropout_attn, hidden_dim, dropout_FFNN)
+                for _ in range(no_blocks)]
+            )
+        else:
+            self.blocks = nn.Sequential(
+                *[Encoder_block(model_dim, num_heads, dropout_attn, hidden_dim, dropout_FFNN)
+                for _ in range(no_blocks)]
+            )
 
     @torch.jit.ignore
     def no_weight_decay(self) -> Set:
@@ -131,9 +148,13 @@ class nuT_vanilla(nn.Module):
         _x = data["x"] if isinstance(data, dict) else data.x
         _batch = data["batch"] if isinstance(data, dict) else data.batch
 
-        # Convert flat [N, d] tensor to padded [B, L, d] sequence
-        x, mask, _ = array_to_sequence(_x, _batch, padding_value=0)
-        B, L, _ = x.shape
+        if self.use_varlen:
+            seqlens = batch2offset(_batch)
+            x = _x
+        else:
+            # Convert flat [N, d] tensor to padded [B, L, d] sequence
+            x, mask, _ = array_to_sequence(_x, _batch, padding_value=0)
+            B, L, _ = x.shape
 
         # Embed hit features into model_dim
         x = self.processing(x)
@@ -141,19 +162,33 @@ class nuT_vanilla(nn.Module):
             x = self.pos_enc(x)
 
         # Prepend CLS token: [B, 1+L, model_dim]
-        cls_token = self.cls_token.repeat(B, 1, 1)
-        x = torch.cat([cls_token, x], dim=1)
+        cls_token = self.cls_token.repeat(B, 1)
+        if self.use_varlen:
+            x, new_seqlens = concat_tokens_from_seqlens(
+                [x, cls_token],
+                [seqlens, seqlens.new_ones((B,))],
+            )
+        else:
+            cls_token = cls_token.unsqueeze(1)
+            x = torch.cat([cls_token, x], dim=1)
 
-        # Padding mask: 0 for real hits, -inf for padded positions.
-        # CLS token is always unmasked (prepend a zero column).
-        pad_mask = torch.zeros(B, L, dtype=x.dtype, device=x.device)
-        pad_mask[~mask] = -torch.inf
-        cls_pad = torch.zeros(B, 1, dtype=x.dtype, device=x.device)
-        pad_mask = torch.cat([cls_pad, pad_mask], dim=1)
+        if not self.use_varlen:
+            # Padding mask: 0 for real hits, -inf for padded positions.
+            # CLS token is always unmasked (prepend a zero column).
+            pad_mask = torch.zeros(B, L, dtype=x.dtype, device=x.device)
+            pad_mask[~mask] = -torch.inf
+            cls_pad = torch.zeros(B, 1, dtype=x.dtype, device=x.device)
+            pad_mask = torch.cat([cls_pad, pad_mask], dim=1)
 
         # Run through encoder blocks (no pairwise attn_mask)
-        for block in self.blocks:
-            x = block(x, mask=pad_mask)
+        if self.use_varlen:
+            for block in self.blocks:
+                x = block(x, new_seqlens)
+        else:
+            for block in self.blocks:
+                x = block(x, mask=pad_mask)
 
         # Return the CLS token as the event-level embedding
+        if self.use_varlen:
+            return scatter_at_first_index(x, _batch, dim=0)
         return x[:, 0]
