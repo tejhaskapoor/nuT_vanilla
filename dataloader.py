@@ -139,7 +139,7 @@ class PrometheusEventDataset(Dataset):
         # A new connection is opened per call so that DataLoader's worker
         # processes (num_workers > 0) each have their own connection.
         cols_sql = ", ".join(self.features)
-        conn = sqlite3.connect(self.db_path)
+        conn = sqlite3.connect(f'file:{self.db_path}?mode=ro', uri=True)
         pulse_df = pd.read_sql_query(
             f"SELECT {cols_sql} FROM {self.pulse_table} "
             f"WHERE event_no = {event_no}",
