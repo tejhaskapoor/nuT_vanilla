@@ -19,7 +19,14 @@ import math
 
 from typing import Any, Callable, Optional, Sequence, Union, List
 
-from flash_attn import flash_attn_varlen_func
+CUDA_ARCH = torch.cuda.get_device_capability(torch.get_default_device())[0]
+if CUDA_ARCH >= 8:  # v2
+    from flash_attn import flash_attn_varlen_func
+elif CUDA_ARCH >= 9:
+    try:
+        from flash_attn.cute import flash_attn_varlen_func
+    except:
+        from flash_attn import flash_attn_varlen_func
 
 
 class FeaturesProcessing(nn.Module):
@@ -411,12 +418,13 @@ class Attention_varlen(nn.Module):
         super().__init__()
         self.dim = dim
         self.num_heads = num_heads
+        self.head_dim = dim // num_heads
         self.scale = self.head_dim**-0.5
         self.dropout = dropout
         
         self.q_proj = nn.Linear(dim, dim, bias=True)
-        self.k_proj = nn.Linear(dim, dim // self.n_rep, bias=True)
-        self.v_proj = nn.Linear(dim, dim // self.n_rep)
+        self.k_proj = nn.Linear(dim, dim, bias=True)
+        self.v_proj = nn.Linear(dim, dim)
         self.proj = nn.Linear(dim, dim)
 
     def forward(
