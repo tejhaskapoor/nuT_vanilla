@@ -71,8 +71,8 @@ def load_config(config_file):
 
 
 def main(config_file):
-    torch.backends.cuda.enable_flash_sdp(False)  # TODO: put to true
     config = load_config(config_file)
+    torch.backends.cuda.enable_flash_sdp(config['training'].get("enable_fash_attn", False))
 
     # Set the seed
     pl.seed_everything(config['training']['seed'])
@@ -303,6 +303,7 @@ def main(config_file):
         log_every_n_steps=config["logs"]["steps"],
         fast_dev_run=config["training"]["test_no_batches"] if config["training"]["test_no_batches"] is not None else False,
         profiler='simple',
+        precision=config["training"]["fit"]["precision"],
     )
 
     trainer.fit(
