@@ -151,6 +151,7 @@ class nuT_vanilla(nn.Module):
         if self.use_varlen:
             seqlens = batch2offset(_batch)
             x = _x
+            B = len(seqlens)
         else:
             # Convert flat [N, d] tensor to padded [B, L, d] sequence
             x, mask, _ = array_to_sequence(_x, _batch, padding_value=0)
@@ -173,11 +174,11 @@ class nuT_vanilla(nn.Module):
             x = torch.cat([cls_token, x], dim=1)
 
         if not self.use_varlen:
-            # Padding mask: 0 for real hits, -inf for padded positions.
+            # Padding mask: 0 for real hits, -inf for padded positions. -> False for real hits and True for padded positions
             # CLS token is always unmasked (prepend a zero column).
-            pad_mask = torch.zeros(B, L, dtype=x.dtype, device=x.device)
-            pad_mask[~mask] = -torch.inf
-            cls_pad = torch.zeros(B, 1, dtype=x.dtype, device=x.device)
+            pad_mask = torch.zeros(B, L, dtype=torch.bool, device=x.device)
+            pad_mask[~mask] = 1
+            cls_pad = torch.zeros(B, 1, dtype=torch.bool, device=x.device)
             pad_mask = torch.cat([cls_pad, pad_mask], dim=1)
 
         # Run through encoder blocks (no pairwise attn_mask)
@@ -190,5 +191,8 @@ class nuT_vanilla(nn.Module):
 
         # Return the CLS token as the event-level embedding
         if self.use_varlen:
-            return scatter_at_first_index(x, _batch, dim=0)
+            positions = torch.arange(x.size(0), device=x.device)
+            offsets = torch.repeat_interleave(torch.cumsum(new_seqlens, dim=0) - new_seqlens, new_seqlens)
+            positions = positions - offsets
+            return x[positions == 0, :]
         return x[:, 0]
