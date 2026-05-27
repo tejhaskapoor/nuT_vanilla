@@ -8,10 +8,13 @@ Classes:
 """
 
 
+import warnings
+
 import torch
 import torch.nn as nn
 from torch.nn.functional import linear
 import torch.nn.functional as F
+from torch.nn.attention import sdpa_kernel, SDPBackend
 from torch.nn.modules import TransformerEncoder, TransformerEncoderLayer
 from torch.functional import Tensor
 import math
@@ -175,7 +178,6 @@ class PairwiseProcessing(nn.Module):
 
 
 class Encoder_block(nn.Module):
-    """ Encoder block for Transformer model. """
     def __init__(
         self,
         dim: int = 128,
@@ -184,24 +186,16 @@ class Encoder_block(nn.Module):
         hidden_dim: int = 256,
         dropout_FFNN: float = 0.2,
     ):
-        """
-            Input data goes through encoder block with MHA and a FFNN with GELU activation function.
-
-            Args:
-                dim: Dimension of the model.
-                num_heads: Number of heads in MHA.
-                dropout_attn: Dropout to be applied in MHA.
-                hidden_dim: Dimension of FFNN.
-                dropout_FFNN: Dropout to be applied in MHA.
-        """
         super().__init__()
         self.ln_1 = nn.LayerNorm(dim)
+        
         self.self_attention = nn.MultiheadAttention(
             dim, 
             num_heads, 
             dropout = dropout_attn, 
-            batch_first = True
+            batch_first = True,
         )
+        
         self.ln_2 = nn.LayerNorm(dim)
         self.FFNN = nn.Sequential(
             nn.Linear(dim, hidden_dim),
@@ -210,15 +204,41 @@ class Encoder_block(nn.Module):
             nn.Linear(hidden_dim, dim),
             nn.Dropout(dropout_FFNN)
         )
+        
+        self._has_warned_fallback = False
 
-    def forward(self, x, mask, attn_mask = None):
+    def forward(self, x, mask=None, attn_mask=None):
         z = self.ln_1(x)
-        x = x + self.self_attention(
-            z, z, z,
-            key_padding_mask=mask,
-            attn_mask=attn_mask,
-            need_weights=False,
-        )[0]
+        try:
+            # Flash Attention
+            with sdpa_kernel([SDPBackend.FLASH_ATTENTION, SDPBackend.EFFICIENT_ATTENTION]):
+                attn_output = self.self_attention(
+                    z, z, z,
+                    key_padding_mask=mask,
+                    attn_mask=attn_mask,
+                    need_weights=False,
+                    average_attn_weights=False, 
+                )[0]
+                
+        except RuntimeError as e:
+            if not self._has_warned_fallback:
+                warnings.warn(
+                    f"\n[nuT Model Warning] Flash Attention rejected! "
+                    f"\nFalling back to Math Backend. \nReason: {e}", 
+                    RuntimeWarning
+                )
+                self._has_warned_fallback = True
+        
+            with sdpa_kernel([SDPBackend.MATH]):
+                attn_output = self.self_attention(
+                    z, z, z,
+                    key_padding_mask=mask,
+                    attn_mask=attn_mask,
+                    need_weights=False,
+                    average_attn_weights=False, 
+                )[0]
+            
+        x = x + attn_output
         y = self.ln_2(x)
         x = x + self.FFNN(y)
 
