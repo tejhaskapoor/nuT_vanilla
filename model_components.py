@@ -22,13 +22,14 @@ import math
 
 from typing import Any, Callable, Optional, Sequence, Union, List
 
-CUDA_ARCH = torch.cuda.get_device_capability(torch.get_default_device())[0]
-if CUDA_ARCH >= 8:  # v2
-    from flash_attn import flash_attn_varlen_func
-elif CUDA_ARCH >= 9:
-    try:
-        from flash_attn.cute import flash_attn_varlen_func
-    except:
+if torch.cuda.is_available():
+    CUDA_ARCH = torch.cuda.get_device_capability(0)[0]
+    if CUDA_ARCH >= 9:  # Hopper/Blackwell: try FA4 first
+        try:
+            from flash_attn.cute import flash_attn_varlen_func
+        except ImportError:
+            from flash_attn import flash_attn_varlen_func
+    elif CUDA_ARCH >= 8:  # Ampere: FA2
         from flash_attn import flash_attn_varlen_func
 
 
