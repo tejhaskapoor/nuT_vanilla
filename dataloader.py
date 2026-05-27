@@ -14,11 +14,14 @@ Batch format returned by collate_fn:
     }
 """
 
+import time
 import logging
 import sqlite3
+import re
 from typing import Callable, Dict, List, Optional, Tuple
 
 import pandas as pd
+import numpy as np
 import torch
 from sklearn.model_selection import train_test_split
 from torch.utils.data import DataLoader, Dataset
@@ -87,6 +90,12 @@ class PrometheusEventDataset(Dataset):
         self.truth_columns = truth_columns
         self.data_definition = data_definition
         self.labels = labels or {}
+        self._worker_conn: Optional[sqlite3.Connection] = None
+
+        # Create/verify an index for event-level lookups.
+        # Without this, each __getitem__ may trigger a full table scan.
+        self._ensure_event_no_index(self.pulse_table)
+        self._ensure_event_no_index(self.truth_table)
 
         # Load truth table into a DataFrame for fast index-based access.
         # Connections must be opened and closed here; worker processes will
@@ -123,6 +132,10 @@ class PrometheusEventDataset(Dataset):
 
         self.truth_df = truth_df.reset_index(drop=True)
         self.event_nos: List[int] = self.truth_df["event_no"].tolist()
+        cols_sql = ", ".join(self.features)
+        self._pulse_query = (
+            f"SELECT {cols_sql} FROM {self.pulse_table} WHERE event_no = ?"
+        )
 
         logger.info(
             f"PrometheusEventDataset: {len(self.event_nos)} events "
@@ -132,22 +145,52 @@ class PrometheusEventDataset(Dataset):
     def __len__(self) -> int:
         return len(self.event_nos)
 
+    def _get_worker_connection(self) -> sqlite3.Connection:
+        # Dataset instances are process-local in DataLoader workers, so this
+        # keeps one connection per worker process instead of opening/closing
+        # one connection for every event.
+        if self._worker_conn is None:
+            self._worker_conn = sqlite3.connect(self.db_path)
+        return self._worker_conn
+
+    def _ensure_event_no_index(self, table_name: str) -> None:
+        # Index creation is idempotent and dramatically speeds up
+        # `WHERE event_no = ?` lookups on large SQLite tables.
+        safe_table = re.sub(r"[^0-9A-Za-z_]", "_", table_name)
+        index_name = f"idx_{safe_table}_event_no"
+        try:
+            conn = sqlite3.connect(self.db_path)
+            conn.execute(
+                f"CREATE INDEX IF NOT EXISTS {index_name} "
+                f"ON {table_name}(event_no)"
+            )
+            conn.commit()
+            conn.close()
+        except sqlite3.Error as exc:
+            logger.warning(
+                "Could not create/use index %s on %s(event_no): %s",
+                index_name,
+                table_name,
+                exc,
+            )
+
     def __getitem__(self, idx: int) -> Dict:
         event_no = self.event_nos[idx]
 
         # ── 1. Read pulse rows for this event ────────────────────────────────
-        # A new connection is opened per call so that DataLoader's worker
-        # processes (num_workers > 0) each have their own connection.
-        cols_sql = ", ".join(self.features)
-        conn = sqlite3.connect(f'file:{self.db_path}?mode=ro', uri=True)
-        pulse_df = pd.read_sql_query(
-            f"SELECT {cols_sql} FROM {self.pulse_table} "
-            f"WHERE event_no = {event_no}",
-            conn,
-        )
-        conn.close()
+        # Use one persistent connection per worker process.
+        conn = self._get_worker_connection()
+        # Use a lightweight cursor fetch instead of pandas.read_sql_query to
+        # avoid the large per-call overhead of constructing a DataFrame.
+        cur = conn.cursor()
+        cur.execute(self._pulse_query, (int(event_no),))
+        rows = cur.fetchall()
 
-        pulse_tensor = torch.from_numpy(pulse_df.values.astype("float32"))
+        if len(rows) == 0:
+            pulse_tensor = torch.empty((0, len(self.features)), dtype=torch.float32)
+        else:
+            arr = np.asarray(rows, dtype=np.float32)
+            pulse_tensor = torch.from_numpy(arr)
         # shape: [n_pulses_raw, n_features]
 
         # ── 2. Build per-event truth dict (scalar tensors) ───────────────────
@@ -173,6 +216,15 @@ class PrometheusEventDataset(Dataset):
             result[label_key] = label_fn(truth_dict)
 
         return result
+
+    def __del__(self) -> None:
+        # Best-effort cleanup for worker-local SQLite connections.
+        conn = getattr(self, "_worker_conn", None)
+        if conn is not None:
+            try:
+                conn.close()
+            except sqlite3.Error:
+                pass
 
 
 # ─────────────────────────────────────────────────────────────────────────────
