@@ -78,6 +78,7 @@ backbone:
     no_evt_blocks: 4           # Encoder blocks including CLS token (global event attention)
     # --- nuT_vanilla only ---
     no_blocks: 8               # Total encoder blocks (vanilla has no hits/evt split)
+    use_varlen: false          # If true, use FlashAttention varlen (no padding); requires CUDA
     # --- shared ---
     dropout_attn: 0.2
     hidden_dim: 256            # Feed-forward network hidden dimension
